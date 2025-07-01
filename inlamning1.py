@@ -54,7 +54,7 @@ def plotaUppgift3(x):
 
     #calculations
     n=np.array([i+1 for i in range(100)])
-    approx_ln_value_of_n=np.array([approx_ln(x,i) for i in n])
+    approx_ln_value_of_n=np.array([faster_approx_ln(x,i) for i in n])
     logValue=np.log(x)
 
     #plot
@@ -66,7 +66,17 @@ def plotaUppgift3(x):
 
 plotaUppgift3(1.41)
 #%% Uppgift 4
-
+def faster_approx_ln(x,max_n):
+    d=np.zeros((max_n+1,max_n+1))
+    d[0,0]=(1+x)/2
+    g=np.sqrt(x)#           g_0=\sqrt{x}
+    for k in range(1,max_n+1):
+        d[0,k]=(d[0,k-1]+g)/2#          a_{i+1}=\frac{a_i \cdot g_i}{2}
+        g=np.sqrt(d[0,k]*g)#     g_{i+1}=\sqrt{a_{i+1} \cdot g_i}
+    for k in range(1,max_n+1):
+        for n_i in range(k,max_n+1):
+            d[k,n_i]=(d[k-1,n_i]-2**(-2*k)*d[k-1,n_i-1])/(1-2**(-2*k))
+    return (x-1)/d[max_n,max_n]
 
 #%% Uppgift 5
 
