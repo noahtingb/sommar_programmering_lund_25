@@ -10,12 +10,22 @@ def approx_ln(x,n):
     #        return np.inf
     #    elif x<0:
     #        return np.nan
-    a=(1+x)/2#              a_0=\frac{1+x}[2}
+    #transform x to an np.array
+    if type(x)==type(float(.1)):
+        x=np.array([x])
+    
+    #initiate
+    a=np.zeros((n+1,x.shape[0]))
+
+    #a_0
+    a[0,:]=(1+x)/2#              a_0=\frac{1+x}[2}
     g=np.sqrt(x)#           g_0=\sqrt{x}
+
+    #a for n>=i+1>0
     for i in range(n):
-        a=(a+g)/2#          a_{i+1}=\frac{a_i \cdot g_i}{2}
-        g=np.sqrt(a*g)#     g_{i+1}=\sqrt{a_{i+1} \cdot g_i}
-    return (x-1)/a
+        a[i+1,:]=(a[i,:]+g)/2#          a_{i+1}=\frac{a_i \cdot g_i}{2}
+        g=np.sqrt(a[i+1,:]*g)#     g_{i+1}=\sqrt{a_{i+1} \cdot g_i}
+    return np.array([list((x-1)/a[i,:]) for i in range(n+1)])
 
 #%% Uppgift 2
 def plota2Ln(n):
@@ -34,7 +44,7 @@ def plota2Ln(n):
     ax[1].set_xscale('log')
     
     #approximate ln and calculate ln
-    approx_ln_value=approx_ln(x,n)
+    approx_ln_value=approx_ln(x,n)[n,:]
     log_of_x=np.log(x)
 
     #plot the correct ln and the approximated ln dependent on x
@@ -67,7 +77,7 @@ def plotaUppgift3(x):
 
     #calculations
     n=np.array([i+1 for i in range(100)])
-    approx_ln_value_of_n=np.array([approx_ln(x,i) for i in n])
+    approx_ln_value_of_n=approx_ln(np.array([x]),100)[1:,0]
     logValue=np.log(x)
 
     #plot
@@ -78,8 +88,9 @@ def plotaUppgift3(x):
     #and that is the lowest precision we can get with 0 excluded,
     #beacuse the code and the datatype is float (real double). 
 
-#cal x
+#calc x
 plotaUppgift3(1.41)
+
 #%% Uppgift 4
 def fast_approx_ln(x,n_max,**kwarg):#kwarg for the return format (the comments below are in Swedish)
     #transform x to an np.array
