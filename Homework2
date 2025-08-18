@@ -1,0 +1,182 @@
+#%%imports
+import numpy as np
+from matplotlib import pyplot as plt
+
+#%% Klass
+class Interval:
+    def __init__(self,*values):
+        #iniziate
+        if len(values)==1:
+            self.a=values[0]
+            self.b=values[0]
+        elif len(values)==2:
+            self.a=values[0]
+            self.b=values[1]
+        else:
+            raise Exception("wrong size")
+        
+    #convert int or float inputs to an array
+    def checkInput(self,values):
+        if len(values)==1:
+            if isinstance(values[0], int):
+                return values[0], values[0]
+            if isinstance(values[0], float):
+                return values[0], values[0]
+            return values[0]
+        return values
+    
+    #to make a<=b
+    def interval_sort(self):
+        if self.a>self.b:
+            self.a,self.b=self.b,self.a
+        return self
+    
+    #{a, b] + [c, d] 
+    def __add__(self,*values):
+        [c,d]=self.checkInput(values)
+        lower_bound=self.a+c
+        heigher_bound=self.b+d
+        return Interval(lower_bound,heigher_bound).interval_sort()
+
+    #{a, b] - [c, d]
+    def __sub__(self,*values):
+        [c,d]=self.checkInput(values)
+        lower_bound=self.a-c
+        heigher_bound=self.b-d
+        return Interval(lower_bound,heigher_bound).interval_sort()
+    
+    #{a, b] * [c, d] 
+    def __mul__(self,*values):
+        [c,d]=self.checkInput(values)
+        lower_bound=min(min(self.a*c,self.b*c),min(self.a*d,self.b*d))
+        heigher_bound=max(max(self.a*c,self.b*c),max(self.a*d,self.b*d))
+        return Interval(lower_bound,heigher_bound).interval_sort()
+    
+    #{a, b] / [c, d] 
+    def __truediv__(self,*values):
+        [c,d]=self.checkInput(values)   
+        if (c==0) or (d==0):#error with 0
+            raise ValueError("division with 0")
+        else:
+            lower_bound=min(min(self.a/c,self.b/c),min(self.a/d,self.b/d))
+            heigher_bound=max(max(self.a/c,self.b/c),max(self.a/d,self.b/d))
+            if lower_bound<-1.7e308 or heigher_bound>1.7e308:
+                raise ValueError("Infinity detected")
+            return Interval(lower_bound,heigher_bound).interval_sort()
+
+    #contains
+    def __contains__(self,value):
+        return (self.a<=value) and (self.b>=value)
+    
+    #negative
+    def __neg__(self):
+        return Interval(-self.a,-self.b).interval_sort()
+
+    #exponent
+    def __pow__(self,exponent):
+        exponent=int(exponent)
+        if exponent<=0:
+            return None
+        
+        a_res,b_res=self.a**exponent,self.b**exponent
+        
+        #cases
+        if exponent%2==0:
+            if self.a>=0:
+                return Interval(a_res,b_res)
+            elif self.b<0:
+                return Interval(b_res,a_res)
+            else:
+                return Interval(0,max(a_res,b_res))
+        else:
+            return Interval(a_res,b_res)
+
+    #reverse functions
+    def __radd__(self,values):
+        return self.__add__(values).interval_sort()
+    
+    def __rsub__(self,values):
+        return (-self.__sub__(values)).interval_sort()
+
+    def __rmul__(self,values):
+        return (self.__mul__(values)).interval_sort()
+
+    #task 3 when this class is
+    def __repr__(self):
+        return [self.a,self.b]
+
+    #make iterable
+    def __iter__(self):
+        return iter([self.a,self.b])
+
+    #print string easier
+    def __str__(self):
+        return f"{[self.a,self.b]}"    
+
+#%% cases 
+
+#copied from You
+I1 = Interval(1 , 4 ) # [1, 4]
+I2 = Interval(-2 , -1 ) # [ -2, -1]
+summa=I1 + I2 # [ -1, 3]
+dif=I1 - I2 # [3, 5]
+produkt=I1 * I2 # [ -8, -1]
+kvot=I1 / I2 # [ -4. , -0.5]
+print(f"addition: {summa}\nsubtraction: {dif}\nmultiplication: {produkt}\ndivision: {kvot}")
+
+#%% Test in
+print(1 in I1) #True
+print(-2 in I1) #False
+print(4 in I1) #True
+print(5 in I1) #False
+
+#%% Test with 1
+I3 = Interval(1) 
+print(I3)
+
+# %%Your cases
+print(Interval(2,3) + 1)   # [3, 4]
+print(1 + Interval(2 ,3))  # [3, 4]
+print(1.0 + Interval(2,3)) # [3.0, 4.0]
+print(Interval(2,3) + 1)   # [3.0, 4.0]
+print(1 - Interval(2,3))   # [-2, -1]
+print(Interval(2,3) - 1.0) # [1, 2]
+print(1.0 - Interval(2,3)) # [-2.0, -1]
+print(Interval(2,3) - 1.0) # [1.0, 2.0]
+print(Interval(2,3) * 1.0) # [2, 3]
+print(1.0 * Interval(2,3)) # [2, 3]
+print(1.0 * Interval(2,3)) # [2.0 , 3.0]
+print(Interval(2,3) * 1.0) # [2.0 , 3.0]
+print(-Interval(4,5))      # see the special method __neg__
+
+#%% Exponent
+print(Interval(2,3)**2)#[4,9]
+print(Interval(-3,-2)**2)#[4,9]
+print(Interval(-2,1)**2)#[0,4]
+
+#copied from you
+x = Interval(-2 , 2 ) # [ -2 , 2 ]
+print(x ** 2) # [ 0 , 4 ]
+print(x ** 3) # [ -8 , 8 ]
+
+#%% Linspan and plot
+import matplotlib.pyplot as plt
+#linspacen
+xl=np.linspace(.0,1.,1000)
+xu=np.linspace(.0,1.,1000)+0.5
+
+#functionen
+def p_x(x):
+    return (3*(x**3))+(-2*(x**2))+(-5*x)-1
+
+#matris of funkvalue
+P=np.array([list(p_x(Interval(xl[i],xu[i]))) for i in range(1000)])
+
+#plota
+plt.plot(xl,P[:,0])
+plt.plot(xl,P[:,1])
+
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title(u"P(x)=3I^3-2I^2-2I-1, I=Interval(x,x+.5)")
+plt.show()
