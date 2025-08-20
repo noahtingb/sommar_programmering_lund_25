@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Basketball:
-    def __init__(self,init_angle,z=1,size=10000,init_speed=9,AIR_resistans=True):
+    def __init__(self,init_angle,z=1,size=5000,init_speed=9,AIR_resistans=True):
         self.x=np.zeros(size)
         self.y=np.zeros(size)
         self.v_x=np.zeros(size)
@@ -38,12 +38,14 @@ class Basketball:
         
     def init_basket(self,init_y_b=3.05,init_x_b=2):    
         self.y_b=3.05
-        self.x_b=2
+        self.x_b=init_x_b
     
     def fillV(self,startindex=1):
-        for i in range(startindex,self.x.shape[0]):
-            self.v_x[i]=self.v_x[i-1]+self.hfac*self.get_x_acc(i-1)
-            self.v_y[i]=self.v_y[i-1]+self.hfac*self.get_y_acc(i-1)
+        self.v_x[startindex]=self.v_x[startindex-1]+self.hfac*self.get_x_acc(startindex-1)
+        self.v_y[startindex]=self.v_y[startindex-1]+self.hfac*self.get_y_acc(startindex-1)
+        for i in range(startindex+1,self.x.shape[0]):
+            self.v_x[i]=self.v_x[i-1]+3/2*self.hfac*self.get_x_acc(i-1)-1/2*self.hfac*self.get_x_acc(i-2)#Euler
+            self.v_y[i]=self.v_y[i-1]+3/2*self.hfac*self.get_y_acc(i-1)-1/2*self.hfac*self.get_y_acc(i-2)#Euler
  
     def fill_xy(self,startindex=1):
         self.x=self.integrate(self.x,self.v_x*self.hfac,startindex=startindex)
@@ -99,6 +101,8 @@ class ploterC:
 
         plt.scatter([2],[3.05])
         plt.ylim(bottom=0)
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.legend()
         plt.show()
 
@@ -123,8 +127,14 @@ class Newton:
         a_der=(self.error(self.Class(self.a[index-1]+self.h_a,self.z[index-1]))-error_last)/self.h_a
         z_der=(self.error(self.Class(self.a[index-1],self.z[index-1]+self.h_z))-error_last)/self.h_z
 
-        a_der*=min(1,abs(7/a_der))
-        z_der*=min(1,abs(7/z_der))
+        #decrease lambda
+        #a_der*=min(1,abs(7/a_der))
+        #z_der*=min(1,abs(7/z_der))
+        print(a_der,z_der)
+        if abs(a_der)<1e-2:
+            a_der=1e-2*a_der/abs(a_der)
+        if abs(z_der)<1e-2:
+            z_der=1e-2*z_der/abs(z_der)
 
         #print(f"\t{a_der} {z_der}")
         self.a[index]=self.a[index-1]-inlarningspeed*error_last/a_der#partielderivata
@@ -169,11 +179,23 @@ basketballs[6].label="Analytic"
 ploter=ploterC()
 ploter.plota(basketballs)
 
-n=Newton(65,1.5,amountofbasketballs=31)
-for i in range(30):
-    inlspeed=.3
+n=Newton(65,1.5,amountofbasketballs=160)
+for i in range(len(n.basketballs)-1):
+    inlspeed=.2*(1-i/len(n.basketballs))+0.1
     n.increase(i+1,inlspeed)
-    print(n.a[i],n.z[i],n.error(n.basketballs[i]))
+    print(i,n.a[i],n.z[i],n.error(n.basketballs[i]))
+
+basketballs=[None]*10
+basketballs[0]=Basketball(n.a[len(n.a)-1],n.z[len(n.z)-1])
+basketballs[0].label="Analytic"
+basketballs[1]=Basketball(70,1.5)
+basketballs[2]=Basketball(85,1.5)
+basketballs[1].label="70 deg"
+basketballs[2].label="85 deg"
+
+
+
+ploter.plota(basketballs)
 
 print("done")
 #%%
